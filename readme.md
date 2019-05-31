@@ -15,11 +15,11 @@ Before the QA processing, assume you already downloaded the DICOM session from X
 
 **Step 4** Use the dcm2niix tool to convert DICOMs to NIFTI by:
 
-> dcm2niix -m y -o <output folder> <DICOM folder> 
+> dcm2niix -m y -o *output_folder* *DICOM_folder*
 
 **Step 5**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
 
-> slicedir <NIFTI1 path> <NIFTI2 path> …… <NIFTIn path>
+> slicedir *NIFTI1_path* *NIFTI2_path* …… *NIFTIn_path*
 
 **FYI**: 
 
