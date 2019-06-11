@@ -19,7 +19,9 @@ Before the QA processing, assume you already downloaded the DICOM session from X
 
 **Step 5**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
 
-> slicedir *NIFTI1_path* *NIFTI2_path* …… *NIFTIn_path*
+> slicesdir *NIFTI1_path* *NIFTI2_path* …… *NIFTIn_path*
+
+You can find the binary slicesdir at /usr/share/fsl/5.0/bin/slicesdir. 
 
 **FYI**: 
 

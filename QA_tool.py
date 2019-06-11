@@ -60,7 +60,7 @@ def dcm_slicedistance(dcm_root):
     ds_sort = sorted(ds_list, reverse = True)
     #print (ds_sort)
     for i in range(0, len(ds_sort) - 2):
-        print ((ds_sort[i] - ds_sort[i + 1]), (ds_sort[i + 1] - ds_sort[i + 2]))
+        #print ((ds_sort[i] - ds_sort[i + 1]), (ds_sort[i + 1] - ds_sort[i + 2]))
         if not abs((ds_sort[i] - ds_sort[i + 1]) - (ds_sort[i + 1] - ds_sort[i + 2])) < (ds_sort[0] - ds_sort[1]):
             return 0
     return 1
