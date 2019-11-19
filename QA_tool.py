@@ -26,7 +26,7 @@ def mkdir(path):
         
 def dcm2nii(src_root, dst_root):
     '''
-    This function transfer the dcm form data to nii form
+    This function transfers the dcm form data to nii form
     :param src_root: The original data 's folder (root)
     :param dst_root: The target data 's folder
     :return:
