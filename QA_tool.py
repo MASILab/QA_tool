@@ -136,7 +136,7 @@ def sliceDis_fold(fold_root, save_csv_path):
     data['distance_check'] = diff
     data.to_csv(save_csv_path, index = False)
     
-def dcm_fold(fold_root, save_csv_path): # instanceN_fold
+def instanceN_fold(fold_root, save_csv_path): # instanceN_fold
     subj_list = os.listdir(fold_root)
     sess, single_folder, instanceN, dicomN, diff = [], [], [], [],[]
     for i in range(0, len(subj_list)):
