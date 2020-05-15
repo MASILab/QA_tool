@@ -54,7 +54,7 @@ def dcm_slicedistance(dcm_root):
     ds_sort = sorted(ds_list, reverse = True)
     res = 1
     for i in range(0, len(ds_sort) - 2):
-        print ((ds_sort[i] - ds_sort[i + 1]), (ds_sort[i + 1] - ds_sort[i + 2]))
+        #print ((ds_sort[i] - ds_sort[i + 1]), (ds_sort[i + 1] - ds_sort[i + 2]))
         if not abs((ds_sort[i] - ds_sort[i + 1]) - (ds_sort[i + 1] - ds_sort[i + 2])) < (ds_sort[0] - ds_sort[1]):
             res = 0
     return res
@@ -136,6 +136,44 @@ def sliceDis_fold(fold_root, save_csv_path):
     data['distance_check'] = diff
     data.to_csv(save_csv_path, index = False)
     
+def sliceDis_fold_NLST(fold_root, save_csv_path):
+    subj_list = os.listdir(fold_root)
+    sess, single_folder, diff = [], [], []
+    for i in range(0, len(subj_list)):
+        if i % 10 == 0: print (i, len(subj_list))
+        subj_path = fold_root + '/' + subj_list[i]
+        sess_list = os.listdir(subj_path)
+        for j in range(len(sess_list)):
+            sess.append(sess_list[j])
+            #print ('(i, j): ',i, j, sess_list[j])
+            sess_path = subj_path + '/' + sess_list[j]
+            instance_list = os.listdir(sess_path)
+            if len(instance_list) == 1:
+                single_folder.append(1)
+            else:
+                single_folder.append(0)
+            size_list = []
+            
+            
+            try:
+                for k in range(len(instance_list)):
+                    #print (sess_path + '/' + instance_list[k])
+
+                    size = len(os.listdir(sess_path + '/' + instance_list[k]))
+                    #print (size)
+                    size_list.append(size)
+                max_index = size_list.index(max(size_list))
+                same = dcm_slicedistance(sess_path + '/' + instance_list[max_index])
+                diff.append(same)
+            except:
+                diff.append('')
+                print (sess_list[j], 'dicom error')
+    data = pd.DataFrame()
+    data['sess'] = sess
+    data['single_folder'] = single_folder
+    data['distance_check'] = diff
+    data.to_csv(save_csv_path, index = False)
+    
 def instanceN_fold(fold_root, save_csv_path): # instanceN_fold
     subj_list = os.listdir(fold_root)
     sess, single_folder, instanceN, dicomN, diff = [], [], [], [],[]
@@ -180,7 +218,47 @@ def instanceN_fold(fold_root, save_csv_path): # instanceN_fold
     data['dicomN-instanceN'] = diff
     data.to_csv(save_csv_path, index = False)
     
+def instanceN_fold_NLST(fold_root, save_csv_path): # instanceN_fold
+    subj_list = os.listdir(fold_root)
+    sess, single_folder, instanceN, dicomN, diff = [], [], [], [],[]
+    for i in range(0, len(subj_list)):
+        if i % 10 == 0: print (i, len(subj_list))
+        subj_path = fold_root + '/' + subj_list[i]
+        sess_list = os.listdir(subj_path)
+        for j in range(len(sess_list)):
+            sess.append(sess_list[j])
+            #print ('(i, j): ',i, j, sess_list[j])
+            sess_path = subj_path + '/' + sess_list[j]
+            instance_list = os.listdir(sess_path)
+            if len(instance_list) == 1:
+                single_folder.append(1)
+            else:
+                single_folder.append(0)
+            size_list = []
+            
+            try:
+                for k in range(len(instance_list)):
 
+                    size = len(os.listdir(sess_path + '/' + instance_list[k]))
+
+                    size_list.append(size)
+                max_index = size_list.index(max(size_list))
+                inst_n, dicom_n, same = dcm_instance(sess_path + '/' + instance_list[max_index])
+                instanceN.append(inst_n)
+                dicomN.append(dicom_n)
+                diff.append(same)
+            except:
+                instanceN.append('')
+                dicomN.append('')
+                diff.append('')
+                print (sess_list[j], 'dicom error')
+    data = pd.DataFrame()
+    data['sess'] = sess
+    data['single_folder'] = single_folder
+    data['instanceN'] = instanceN
+    data['dicomN'] = dicomN
+    data['dicomN-instanceN'] = diff
+    data.to_csv(save_csv_path, index = False)
     
 def get_downloaded_session(xnat_root, save_csv_path):
     time_folders = os.listdir(xnat_root)
