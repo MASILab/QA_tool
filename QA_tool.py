@@ -12,6 +12,7 @@ import matplotlib.patches as patches
 from glob import glob
 import h5py
 import pydicom
+import skimage
 
 def mkdir(path):
     if not os.path.exists(path):
@@ -70,6 +71,78 @@ def dcm_lenbody(dcm_root):
 
     return ds_sort[0] - ds_sort[-1]
 
+def lenbody_fold(fold_root, save_csv_path):
+    subj_list = os.listdir(fold_root)
+    sess, single_folder, length = [], [], []
+    #subj = []
+    for i in range(0, len(subj_list)):
+       # if i > 3: break
+        if i % 10 == 0: print (i, len(subj_list))
+        subj_path = fold_root + '/' + subj_list[i]
+        sess_list = os.listdir(subj_path)
+        for j in range(len(sess_list)):
+            sess.append(sess_list[j])
+            #print ('(i, j): ',i, j, sess_list[j])
+            sess_path = subj_path + '/' + sess_list[j]
+            instance_list = os.listdir(sess_path)
+            if len(instance_list) == 1:
+                single_folder.append(1)
+            else:
+                single_folder.append(0)
+            size_list = []
+            try:
+                for k in range(len(instance_list)):
+                    #print (sess_path + '/' + instance_list[k])
+
+                    size = len(os.listdir(sess_path + '/' + instance_list[k] + '/DICOM'))
+                    #print (size)
+                    size_list.append(size)
+                max_index = size_list.index(max(size_list))
+                l = dcm_lenbody(sess_path + '/' + instance_list[max_index] + '/DICOM')
+                length.append(l)
+            except:
+                length.append('')
+                print ("length error", subj_list[i], sess_list[j])
+    data = pd.DataFrame()
+    data['sess'] = sess
+    data['single_folder'] = single_folder
+    data['length'] = length
+    data.to_csv(save_csv_path, index = False)
+
+def lenbody_fold_NLST(fold_root, save_csv_path):
+    subj_list = os.listdir(fold_root)
+    subj, sess, length = [], [], []
+    for i in range(len(subj_list)):
+        #if i > 5: break
+        if i % 10 == 0: print (i, len(subj_list))
+        subj_path = fold_root + '/' + subj_list[i]
+        sess_list = os.listdir(subj_path)
+        for j in range(len(sess_list)):
+            sess.append(sess_list[j])
+            subj.append(subj_list[i])
+            #print ('(i, j): ',i, j, sess_list[j])
+            sess_path = subj_path + '/' + sess_list[j]
+            instance_list = os.listdir(sess_path)
+            size_list = []
+            try:
+                for k in range(len(instance_list)):
+                    #print (sess_path + '/' + instance_list[k])
+
+                    size = len(os.listdir(sess_path + '/' + instance_list[k]))
+                    #print (size)
+                    size_list.append(size)
+                max_index = size_list.index(max(size_list))
+                l = dcm_lenbody(sess_path + '/' + instance_list[max_index])
+                length.append(l)
+            except:
+                length.append('')
+                print ("length error", subj_list[i], sess_list[j])
+    data = pd.DataFrame()
+    data['subj'] = subj
+    data['sess'] = sess
+    data['length'] = length
+    data.to_csv(save_csv_path, index = False)
+
 def check_affine(nii_path):
     img_nib = nib.load(nii_path)
     aff_mat = img_nib.affine
@@ -79,7 +152,14 @@ def check_affine(nii_path):
         return 0
     ## please use fslreorient2std to make the orientation correct. 
     
-def check_affine_fold(fold_root, save_csv_path): # different from sliceDis_fold and dcm_fold, this is for nifti folder.
+def resolution_max(nii_path):
+    img_nib = nib.load(nii_path)
+    aff_mat = img_nib.affine
+    resolution = [abs(aff_mat[0][0]), abs(aff_mat[1][1]), abs(aff_mat[2][2])]
+    return max(resolution)
+    
+def check_affine_fold(fold_root, save_csv_path): 
+    # different from sliceDis_fold and dcm_fold, this is for nifti folder.
     item_list = os.listdir(fold_root)
     res_list = []
     for i in range(len(item_list)):
@@ -91,6 +171,50 @@ def check_affine_fold(fold_root, save_csv_path): # different from sliceDis_fold 
     data = pd.DataFrame()
     data['id'] = item_list
     data['affine_check'] = res_list
+    data.to_csv(save_csv_path, index = False)
+    
+def check_affine_fold_NLST(fold_root, save_csv_path): 
+    # different from sliceDis_fold and dcm_fold, this is for nifti folder.
+    subj_list = os.listdir(fold_root)
+    res_list,SESS_list = [], []
+    for i in range(len(subj_list)):
+        #if i > 10: break
+        if i % 10 == 0: print (i, len(subj_list))
+        sess_list = os.listdir(fold_root + '/' + subj_list[i])
+        for j in range(len(sess_list)):
+            SESS_list.append(subj_list[i] + 'time' + sess_list[j])
+            nib_paths = glob(fold_root + '/' + subj_list[i] + '/' + sess_list[j] + '/*.nii.gz')
+            if len(nib_paths) < 1:
+                res_list.append('')
+            else:
+                nib_path = nib_paths[0]
+                res = check_affine(nib_path)
+                res_list.append(res)        
+    data = pd.DataFrame()
+    data['id'] = SESS_list
+    data['affine_check'] = res_list
+    data.to_csv(save_csv_path, index = False)
+    
+def max_res_fold_NLST(fold_root, save_csv_path): 
+    # different from sliceDis_fold and dcm_fold, this is for nifti folder.
+    subj_list = os.listdir(fold_root)
+    res_list,SESS_list = [], []
+    for i in range(len(subj_list)):
+        #if i > 10: break
+        if i % 10 == 0: print (i, len(subj_list))
+        sess_list = os.listdir(fold_root + '/' + subj_list[i])
+        for j in range(len(sess_list)):
+            SESS_list.append(subj_list[i] + 'time' + sess_list[j])
+            nib_paths = glob(fold_root + '/' + subj_list[i] + '/' + sess_list[j] + '/*.nii.gz')
+            if len(nib_paths) < 1:
+                res_list.append('')
+            else:
+                nib_path = nib_paths[0]
+                res = resolution_max(nib_path)
+                res_list.append(res)        
+    data = pd.DataFrame()
+    data['id'] = SESS_list
+    data['res_max'] = res_list
     data.to_csv(save_csv_path, index = False)
         
 def sliceDis_fold(fold_root, save_csv_path):
@@ -260,27 +384,7 @@ def instanceN_fold_NLST(fold_root, save_csv_path): # instanceN_fold
     data['dicomN-instanceN'] = diff
     data.to_csv(save_csv_path, index = False)
     
-def get_downloaded_session(xnat_root, save_csv_path):
-    time_folders = os.listdir(xnat_root)
-    Time, Subject, Session = [],[],[]
-    for time_fold in time_folders:
-        if not os.path.exists(xnat_root + '/' + time_fold + '/MCL'):
-            continue
-        subj_list = os.listdir(xnat_root + '/' + time_fold + '/MCL')
-        for i in range(len(subj_list)):
-            print (time_fold, i, subj_list[i])
-            subj_path = xnat_root + '/' + time_fold + '/MCL/'+ subj_list[i]
-            sess_list = os.listdir(subj_path)
-            for j in range(len(sess_list)):
-                Time.append(time_fold)
-                Subject.append(subj_list[i])
-                Session.append(sess_list[j])
-    print (len(Time))            
-    data = pd.DataFrame()
-    data['Time'] = Time
-    data['Subject'] = Subject
-    data['Session'] = Session
-    data.to_csv(save_csv_path, index = False)
+
     
 def filter_few_slices(csv_path):
     df = pd.read_csv(csv_path)
@@ -293,45 +397,7 @@ def filter_few_slices(csv_path):
     df['auto'] = auto_QA_result
     df.to_csv(csv_path, index = False)
 
-def dcm2nii_MCL(MCL_root):
-    '''
-    exp: dcm2nii_MCL('/share5/gaor2/data/MCL_subjects/MCL')
-    :param MCL_root:
-    :return:
-    '''
-    subj_list = os.listdir(MCL_root)
-    for subj in subj_list:
-        print (subj)
-        subj_path = MCL_root + '/' + subj
-        sess_list = os.listdir(subj_path)
-        for sess in sess_list:
-            sess_path = subj_path + '/' + sess
-            fder_list = os.listdir(sess_path)
-            for fder in fder_list:
-                fder_path = sess_path +'/' + fder
-                item_list = os.listdir(fder_path)
-                #if 'NIFTI' not in item_list:
-                if 'DICOM' in item_list:
-                        
-                        mkdir(fder_path + '/new_NIFTI')
-                        if len(os.listdir(fder_path + '/new_NIFTI')) > 0:
-                            continue
-                        dcm2nii(fder_path + '/DICOM', fder_path + '/new_NIFTI')
-                     
-def dcm2nii_spread(data_root):
-    sess_list = os.listdir(data_root)
-    for sess in sess_list:
-        sess_path = data_root + '/' + sess
-        fder_list = os.listdir(sess_path)
-        for fder in fder_list:
-            fder_path = sess_path +'/' + fder
-            item_list = os.listdir(fder_path)
-            #if 'NIFTI' not in item_list:
-            if 'DICOM' in item_list:
-                    mkdir(fder_path + '/new_NIFTI')
-                    if len(os.listdir(fder_path + '/new_NIFTI')) > 0:
-                        continue
-                    dcm2nii(fder_path + '/DICOM', fder_path + '/new_NIFTI')
+
                         
 def dcm2nii_condition_MCL(MCL_root, txt_file):
     '''
@@ -388,77 +454,7 @@ def dcm2nii_project(SPORE_root):  # this make sense for spore and mcl
                         #print (fder_path + '/DICOM', fder_path + '/new_NIFTI')
                         dcm2nii(fder_path + '/DICOM', fder_path + '/new_NIFTI')
                         
-def dcm2nii_condition(SPORE_root, qa_csv):  # this make sense for spore and mcl, and introduce condition for dcm2nii
-    subj_list = os.listdir(SPORE_root)
-    df = pd.read_csv(qa_csv)
-    df_qa = df.loc[df['dicomN-instanceN'] <= 0]
-    #df_qa = df_qa.loc[df_qa['']]
-    sess_qa = df_qa['sess'].tolist()
-    for i in range(len(subj_list)):
-        subj = subj_list[i]
-        print (i, len(subj_list), subj)
-        #if (subj == '40593716009'): continue
-        subj_path = SPORE_root + '/' + subj
-        sess_list = os.listdir(subj_path)
-        for sess in sess_list:
-            if sess not in sess_qa:
-                continue
-            sess_path = subj_path + '/' + sess
-            fder_list = os.listdir(sess_path)
-            for i in range(len(fder_list)):
-                fder = fder_list[i]
-                ori_fder_path = sess_path +'/' + fder
-                fder_path = sess_path + '/new_max'
-                if not os.path.exists(fder_path):
-                #print ('mv ' + ori_fder_path + ' ' + fder_path)
-                    os.rename(ori_fder_path ,fder_path)
-                    print (fder_path)
-                item_list = os.listdir(fder_path)
-                #if 'NIFTI' not in item_list:
-                if 'DICOM' in item_list:
-                        mkdir(fder_path + '/new_NIFTI')
-                        if len(os.listdir(fder_path + '/new_NIFTI')) != 0:
-                            continue
-                        #print (fder_path + '/DICOM', fder_path + '/new_NIFTI')
-                        dcm2nii(fder_path + '/DICOM', fder_path + '/new_NIFTI')
-                        
-def dcm2nii_needed(SPORE_root, need_txt, source):  # this make sense for spore and mcl, and introduce condition for dcm2nii
-    subj_list = os.listdir(SPORE_root)
-    f = open(need_txt)
-    need_lines = f.readlines()
-    need_lines = [line.strip() for line in need_lines]
 
-    for i in range(len(subj_list)):
-        subj = subj_list[i]
-        print (i, len(subj_list), subj)
-        #if (subj == '40593716009'): continue
-        subj_path = SPORE_root + '/' + subj
-        sess_list = os.listdir(subj_path)
-        for sess in sess_list:
-            sess_vec = re.split('[-_]', sess)
-            if source == 'SPORE':
-                norm_sess = sess_vec[1] + 'time' + sess_vec[2]
-            else:
-                norm_sess = sess_vec[0] + 'time' + sess_vec[-1]
-            if norm_sess not in need_lines:
-                continue
-            print (i, len(subj_list), subj, sess)
-            sess_path = subj_path + '/' + sess
-            fder_list = os.listdir(sess_path)
-            size_list = []
-            for k in range(len(fder_list)):
-                
-                size = len(os.listdir(sess_path + '/' + fder_list[k] + '/DICOM'))
-                size_list.append(size)
-                max_index = size_list.index(max(size_list))
-            max_index = size_list.index(max(size_list))
-            os.rename(sess_path + '/' + fder_list[max_index], sess_path + '/new_max')
-            
-            mkdir(sess_path + '/new_max/new_NIFTI')
-            if len(os.listdir(sess_path + '/new_max/new_NIFTI')) != 0:
-                continue
-            #print (fder_path + '/DICOM', fder_path + '/new_NIFTI')
-            dcm2nii(sess_path + '/new_max/DICOM', sess_path + '/new_max/new_NIFTI')
                         
 def cp_to_combine(data_root, new_root, QA_csv):  # this copy the QA data to combine. 
     df = pd.read_csv(QA_csv)
@@ -472,91 +468,6 @@ def cp_to_combine(data_root, new_root, QA_csv):  # this copy the QA data to comb
             print ('mv ' + ori_path + ' ' + new_path)
 
 
- 
-def get_trdata_project(data_root, new_root):
-    '''
-    I made some change compare with data_tool.py. This function for after the dicom header check.
-    '''
-    subj_list = os.listdir(data_root)
-    for i in range(len(subj_list)):
-        print (i, subj_list[i])
-        subj_path = os.path.join(data_root, subj_list[i])
-        sess_list = os.listdir(subj_path)
-        subj_id = re.split('[-_]', subj_list[i])[0]
-        #subj_id = subj_list[i].split('_')[1]
-        mkdir(new_root + '/' + subj_id)
-        for j in range(len(sess_list)):
-            sess_path = os.path.join(subj_path, sess_list[j])
-#             if len(os.listdir(sess_path)) != 1:
-#                 print (sess_path, 'len != 1')
-#                 continue
-            nifti_path = sess_path + '/new_max/new_NIFTI'
-            #sess_id = re.split('[_-]', sess_list[j])[-1]
-            sess_id = re.split('[_-]', sess_list[j])[1]
-            #print (sess_id[:4])
-            if sess_id[:4] < '2000':
-                print ('--------------------sess_id: ', sess_id)
-
-            
-            data_list = glob(os.path.join(nifti_path, '*.nii.gz'))
-            if len(data_list) == 0:
-                continue
-                
-            mkdir(new_root + '/' + subj_id + '/' + sess_id)
-            
-            if (len(os.listdir(new_root + '/' + subj_id + '/' + sess_id)) > 0):
-                print (new_root + '/' + subj_id + '/' + sess_id, ' already completed')
-                continue
-            
-            os.rename(data_list[0], nifti_path + '/move.nii.gz')
-            new_name = subj_id + 'time' + sess_id + '.nii.gz'
-            print ('mv ' + nifti_path + '/move.nii.gz' + ' ' + new_root + '/' + subj_id + '/' + sess_id + '/' + new_name)
-            #break
-            os.system('mv ' + nifti_path + '/move.nii.gz' + ' ' + new_root + '/' + subj_id + '/' + sess_id + '/' + new_name)
-
-def mov_data(ori_root, new_root, QA_csv):
-    df = pd.read_csv(QA_csv)
-    for i, item in df.iterrows():
-        subj = str(item['subject'])
-        sess = str(item['session'])
-        mkdir(new_root + '/' + subj + '/' + sess)
-        print ("mv " + ori_root + '/' + subj + '/' + sess + '/' + subj + 'time' + sess + '.nii.gz ' + new_root + '/' + subj + '/' + sess + '/' + subj + 'time' + sess + '.nii.gz')
-        os.system("mv " + ori_root + '/' + subj + '/' + sess + '/' + subj + 'time' + sess + '.nii.gz ' + new_root + '/' + subj + '/' + sess + '/' + subj + 'time' + sess + '.nii.gz')
-
-def get_trdata_spread():
-    import os 
-    from glob import glob
-    import re
-
-    data_root = '/media/gaor2/8e7f6ccf-3585-4815-856e-80ce8754c5b5/data/MCL/xnat/061219'
-    new_root = '/nfs/masi/gaor2/data/MCL/spread/061219'
-
-    data_list = os.listdir(data_root)
-
-    for i in range(len(data_list)):
-        sess_path = data_root + '/' + data_list[i]
-        sess_list = os.listdir(sess_path)
-        print (i, sess_list)
-        #assert len(sess_list) == 1
-        #for j in range(len(sess_list)):
-            
-        file_path = sess_path  + '/new_max/new_NIFTI'
-        if not os.path.exists(file_path):
-            file_path = sess_path  + '/file0/new_NIFTI'
-        nifti_list = glob(os.path.join(file_path, '*.nii.gz'))
-
-        #print (nifti_list)
-        if len(nifti_list) != 1:
-            print (file_path)
-            continue 
-        sess_vec = re.split('[-_]', data_list[i])
-        new_name = sess_vec[0] + 'time' + sess_vec[-1]
-        if not os.path.exists(new_root + '/' + new_name):
-            os.mkdir(new_root + '/' + new_name)
-        else:
-            continue
-
-        os.system('cp ' + nifti_list[0] + ' ' + new_root + '/' + new_name + '/' + new_name + '.nii.gz')
 
             
 def check_empty(data_root):
@@ -642,7 +553,45 @@ def find_bad_from_discsv(csv_root, save_txt):
     for key in sess_QA.keys():
         if 1 not in sess_QA[key]:
             f.write(key + '\n')
-    f.close()        
+    f.close()  
+    
+def QA_npy(npy_path, save_path, img_size):
+    img = np.load(npy_path)[0]
+
+    img_shape = img.shape
+    new_img = np.zeros((3 * img_size, 3 * img_size))
+
+    tmp_dim = img_shape[0]
+    for i in range(3):
+        tmp_ind = int(tmp_dim / 4 * (i +1))
+        tmp_img = transform.resize(img[tmp_ind, :, :], (img_size, img_size))
+        new_img[: img_size, i * img_size : (i+1) *img_size] = tmp_img
+
+    tmp_dim = img_shape[1]
+    for i in range(3):
+        tmp_ind = int(tmp_dim / 4 * (i +1))
+        tmp_img = transform.resize(img[:, tmp_ind,  :], (img_size, img_size))
+        new_img[img_size : 2 * img_size, i * img_size : (i+1) *img_size] = tmp_img
+
+    tmp_dim = img_shape[2]
+    for i in range(3):
+        tmp_ind = int(tmp_dim / 4 * (i +1))
+        tmp_img = transform.resize(img[:,  :, tmp_ind], (img_size, img_size))
+        new_img[2 * img_size : 3 * img_size, i * img_size : (i+1) *img_size] = tmp_img
+    skimage.io.imsave(save_path, new_img)
+    #plt.imshow(new_img)
+    
+def QA_npy_fold(npy_root, save_root, img_size):
+    npy_list = os.listdir(npy_root)
+    
+    npy_list = [i for i in npy_list if 'clean' in i]
+    
+    for i in range(len(npy_list)):
+        #if i > 3: break
+        npy_path = npy_list[i]
+        print (i, len(npy_list), npy_list[i])
+        save_path = save_root + '/' + npy_path.replace('.npy', '.png')
+        QA_npy(npy_root + '/' + npy_path, save_path, img_size)
         
         
 

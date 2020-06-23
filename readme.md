@@ -20,6 +20,8 @@ Before the QA processing, assume you already downloaded the DICOM session from X
 
 if set the -m as n doesn't work, set the -m as y. However, here should be *very careful* to check if generated NIFTI is what you want. 
 
+A example (2290718171-20100301) that the image is good, but dcm2niix -m n cannot successfully convert. Should use -m y.
+
 **Step 5**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
 
 > slicesdir *NIFTI1_path* *NIFTI2_path* …… *NIFTIn_path*
@@ -31,6 +33,8 @@ You can find the binary slicesdir at /usr/share/fsl/5.0/bin/slicesdir.
 (1) when we check the slice distance in step 2, there is a parameter <slice distance difference> we should define. We can not define the difference to 0, because I find there are good images with slice distance difference. My suggestion is define the tolerance slice distance difference smaller than slice distance but larger than 0. 
 
 (2) Maybe not all the above steps are necessary to judge a session is good or not. For example, based on my experience, I find all the sessions can pass the slice distance check (described in step 1) can always pass the instance number check (described in step 2). However, each function can provide different information for DICOM or NIFTI, and the instance number check would not take much time. 
+
+(3) In my QA experinece, a session is good when one scan is with good quality of this session.  
 
 ## 2. Suggestions and Experiences dealing with the file from XNAT
 
