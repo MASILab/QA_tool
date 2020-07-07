@@ -41,14 +41,14 @@ if set the -m as n doesn't work, set the -m as y. However, here should be *very 
 
 A example (2290718171-20100301) that the image is good, but dcm2niix -m n cannot successfully convert. Should use -m y.
 
-**Step 5**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
-=======
-**Step 6**: NIFTI Orientation Check and Resolution filtering.
+**Step 6**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
+
+**Step 7**: NIFTI Orientation Check and Resolution filtering.
 
 ![Orientation Check](./example_image/orientationCheck.png)
 <p align="center"> Fig. 5 Orientation Check failing case (click this image can see details)  </p>
 
-**Step 7**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
+**Step 8**: use the slicedir tool to visualize a batch of NIFTI files to double check, or use MIPAV to check one by one (time consuming). 
 
 
 > slicesdir *NIFTI1_path* *NIFTI2_path* …… *NIFTIn_path*
