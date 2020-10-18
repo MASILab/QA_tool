@@ -69,19 +69,7 @@ For MASI lab member, you can find the binary slicesdir at /usr/share/fsl/5.0/bin
 
 (3) In my QA experinece, a session is good when one scan is with good quality of this session. 
 
-## 2. Suggestions and Experiences dealing with the file from XNAT
-
-1. Some file names contain  invalid symbol (such as ')', ',' ) which might cause i/o error when process those images. 
-
-   **My suggestion** is renaming those files before processing. Please see the function  *QA_tool/dcm2nii_project*  for example. 
-
-2. In most of time, the DICOM file under a folder with the name "DICOM". However, in few case, DICOM files are under the folder with name "secondary". 
-
-   **My suggestion** is renaming those files before processing. Please see the function  *QA_tool/dcm_fold*  for example.   
-
-3. Some sessions from XNAT would have more that one folder that contains DICOM files. What we need is if only there is one folder that contains "legal" DICOM files. 
-
-   **My suggestion** is pick the folder with largest number of DICOMs to process in the first round, and keep the record of the session if it has multiple DICOM folders or not. If yes, manually check other folders if the first round didn't pass the QA. Please see  the function  *QA_tool/dcm_fold*  for example.   
+ 
 
     
 
